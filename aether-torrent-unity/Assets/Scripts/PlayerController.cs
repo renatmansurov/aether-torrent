@@ -1,16 +1,17 @@
+using System;
 using System.Collections;
+using System.Globalization;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
-    [Header("References")]
-    public CharacterController characterController;
+    [Header("References")] public CharacterController characterController;
     public Animator animator;
 
-    [Header("Jump Settings")]
-    [Tooltip("Maximum jump height when jump is fully held.")]
+    [Header("Jump Settings")] [Tooltip("Maximum jump height when jump is fully held.")]
     public float maxJumpHeight = 5f;
 
     [Tooltip("Low jump height when jump is tapped.")]
@@ -28,29 +29,38 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Time window to buffer a jump input before landing.")]
     public float jumpBufferTime = 0.2f;
 
-    [Tooltip("Total jumps allowed (2 for double jump).")]
-    [SerializeField] private int maxJumps = 2;
+    [Tooltip("Total jumps allowed (2 for double jump).")] [SerializeField]
+    private int maxJumps = 2;
 
-    [Header("Jump Sustain Settings")]
-    [Tooltip("Additional upward force applied while the jump button is held on the first jump.")]
-    [SerializeField] private float jumpSustainForce = 20f; // For first jump
+    [Header("Jump Sustain Settings")] [Tooltip("Additional upward force applied while the jump button is held on the first jump.")] [SerializeField]
+    private float jumpSustainForce = 20f; // For first jump
 
-    [Tooltip("Maximum duration (in seconds) for the jump sustain phase on the first jump.")]
-    [SerializeField] private float maxJumpSustainTime = 0.2f;
+    [Tooltip("Maximum duration (in seconds) for the jump sustain phase on the first jump.")] [SerializeField]
+    private float maxJumpSustainTime = 0.2f;
 
-    [Tooltip("Additional upward force applied while the jump button is held on the double jump.")]
-    [SerializeField] private float doubleJumpSustainForce = 10f; // For second jump
+    [Tooltip("Additional upward force applied while the jump button is held on the double jump.")] [SerializeField]
+    private float doubleJumpSustainForce = 10f; // For second jump
 
-    [Tooltip("Maximum duration (in seconds) for the jump sustain phase on the double jump.")]
-    [SerializeField] private float maxDoubleJumpSustainTime = 0.1f;
+    [Tooltip("Maximum duration (in seconds) for the jump sustain phase on the double jump.")] [SerializeField]
+    private float maxDoubleJumpSustainTime = 0.1f;
 
-    [Header("Movement Settings")]
-    public float maxSpeed;
+    [Header("Movement Settings")] public float maxSpeed;
     [SerializeField] private float movementLerpSpeed;
     [SerializeField] private float turnSmoothTime = 0.1f;
     [SerializeField] private float gravityMult = 3f;
     [SerializeField] private float jumpGravityMult = 3f;
     [SerializeField] private float fallTime;
+
+    [Header("Dash Settings")] public float dashDistance = 5f; // Total distance to cover during dash
+    public float dashTime = 0.2f; // Total time the dash lasts
+    public float dashCooldown = 1f; // Cooldown period before dash can be used again
+
+    private bool isDashing = false; // Whether the player is currently dashing
+    private float dashTimer = 0f; // Timer for the duration of the current dash
+    private Vector3 dashDirection; // The normalized direction in which to dash
+    private float dashCooldownTimer = 0f; // Internal timer for dash cooldown
+    private int dashCount = 0; // Counts dashes used in the current jump (max 1)
+    private float currentDashSpeed = 0f; // Computed speed = dashDistance / dashTime
 
     // Internal state variables
     private float lastGroundedTime = -999f;
@@ -70,6 +80,11 @@ public class PlayerController : MonoBehaviour
     private float startFallTime;
     private float turnSmoothVelocity;
 
+    //Debug Data
+    float currentHeight;
+    float lastHeight;
+    public float lastJumpHeight;
+
     // Animator parameter hashes
     private static readonly int ChrSpeedID = Animator.StringToHash("chrSpeed");
     private static readonly int JumpID = Animator.StringToHash("jump");
@@ -83,26 +98,76 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        // Decrement the jump buffer timer each frame.
+        // Existing update tasks...
         if (jumpBufferCounter > 0f)
             jumpBufferCounter -= Time.deltaTime;
+
+        // Decrement dash cooldown timer if active.
+        if (dashCooldownTimer > 0f)
+            dashCooldownTimer -= Time.deltaTime;
 
         ApplyRotation();
         UpdateAnimator();
 
-        // Check falling state for animations, etc.
         if (!IsGrounded() || startFall || isFalling)
             CheckFall();
 
-        // Process jump if buffered and conditions allow.
         UpdateJump();
+        MeasureHeight();
     }
 
     private void FixedUpdate()
     {
-        ApplyMovement();
-        ApplyGravity();
+        if (isDashing)
+        {
+            // Apply standard gravity to update vertical velocity during dash.
+            ApplyStandardGravity();
+
+            // Compute dash movement vector:
+            // Horizontal movement uses the computed currentDashSpeed.
+            var dashMove = dashDirection * currentDashSpeed;
+            dashMove.y = verticalVelocity; // Preserve vertical motion.
+
+            // Move the character.
+            characterController.Move(dashMove * Time.fixedDeltaTime);
+
+            // Decrement the dash timer and end dash when time is up.
+            if ((dashTimer -= Time.fixedDeltaTime) <= 0f)
+                isDashing = false;
+        }
+        else
+        {
+            ApplyMovement();
+            ApplyGravity();
+        }
     }
+
+    private void OnDrawGizmos()
+    {
+        Vector3 lastJumpHeightPos = new Vector3(characterController.transform.position.x, lastJumpHeight - characterController.height / 2, characterController.transform.position.z);
+        Handles.DrawWireDisc(lastJumpHeightPos, Vector3.up, 1);
+        GUIStyle style = new GUIStyle
+        {
+            normal =
+            {
+                textColor = Color.red
+            },
+            fontSize = 20
+        };
+        Handles.Label(lastJumpHeightPos, "Last Jump:" + (lastJumpHeight - characterController.height / 2).ToString(CultureInfo.InvariantCulture), style);
+    }
+
+    private void MeasureHeight()
+    {
+        currentHeight = characterController.transform.position.y;
+        if (currentHeight > lastHeight)
+        {
+            lastJumpHeight = currentHeight;
+        }
+
+        lastHeight = currentHeight;
+    }
+
 
     private bool IsGrounded() => characterController.isGrounded;
 
@@ -110,11 +175,9 @@ public class PlayerController : MonoBehaviour
     {
         if (IsGrounded() && verticalVelocity <= 0)
         {
-            if (verticalVelocity < 0)
-                verticalVelocity = -1f; // Keeps you "stuck" to the ground.
-
+            verticalVelocity = verticalVelocity < 0 ? -1f : verticalVelocity; // Keeps you "stuck" to the ground.
             lastGroundedTime = Time.time;
-            jumpCount = 0;
+            jumpCount = dashCount = 0; // Reset jump and dash count on landing
             jumping = false;
             jumpSustainTimer = 0f;
         }
@@ -124,10 +187,9 @@ public class PlayerController : MonoBehaviour
             ApplyStandardGravity();
 
             // Determine the current sustain parameters.
-            float currentSustainForce = (jumpCount == 1) ? jumpSustainForce : doubleJumpSustainForce;
-            float currentMaxSustainTime = (jumpCount == 1) ? maxJumpSustainTime : maxDoubleJumpSustainTime;
+            var currentSustainForce = (jumpCount == 1) ? jumpSustainForce : doubleJumpSustainForce;
+            var currentMaxSustainTime = (jumpCount == 1) ? maxJumpSustainTime : maxDoubleJumpSustainTime;
 
-            // If we're in the sustain phase, add the additional upward force.
             if (jumping && holdJump && jumpSustainTimer < currentMaxSustainTime)
             {
                 verticalVelocity += currentSustainForce * Time.fixedDeltaTime;
@@ -145,16 +207,16 @@ public class PlayerController : MonoBehaviour
     // Standard gravity application (with multipliers) for when sustain is not applied.
     private void ApplyStandardGravity()
     {
-        float currentGravityMult = verticalVelocity < 0 ? jumpGravityMult + gravityMult : gravityMult;
+        var currentGravityMult = verticalVelocity < 0 ? jumpGravityMult + gravityMult : gravityMult;
         verticalVelocity += gravity * currentGravityMult * Time.fixedDeltaTime;
     }
 
     private void UpdateJump()
     {
         // Allow jump if on the ground (or within coyote time) or if additional jumps are available.
-        bool canJump = IsGrounded() ||
-                       (Time.time - lastGroundedTime <= coyoteTime) ||
-                       (jumpCount < maxJumps);
+        var canJump = IsGrounded() ||
+                      (Time.time - lastGroundedTime <= coyoteTime) ||
+                      (jumpCount < maxJumps);
 
         if (jumpBufferCounter > 0f && canJump)
         {
@@ -171,15 +233,11 @@ public class PlayerController : MonoBehaviour
 
         jumpCount++;
 
-        float targetImpulse = (jumpCount == 1)
-            ? Mathf.Sqrt(2f * -gravity * maxJumpHeight)
-            : Mathf.Sqrt(2f * -gravity * doubleJumpHeight);
+        // Calculate the target impulse based on the jump count.
+        var targetImpulse = Mathf.Sqrt(2f * -gravity * (jumpCount == 1 ? maxJumpHeight : doubleJumpHeight));
 
         // If already moving upward, take the maximum of the current velocity or the target impulse.
-        if (verticalVelocity > 0)
-            verticalVelocity = Mathf.Max(verticalVelocity, targetImpulse);
-        else
-            verticalVelocity = targetImpulse;
+        verticalVelocity = verticalVelocity > 0 ? Mathf.Max(verticalVelocity, targetImpulse) : targetImpulse;
 
         // Begin the jump sustain phase by resetting the timer.
         jumping = true;
@@ -192,11 +250,12 @@ public class PlayerController : MonoBehaviour
     // Basic slope check; extend this if you want to restrict jumping on steep slopes.
     private bool CheckSlope()
     {
-        if (Physics.Raycast(new Ray(transform.position, Vector3.down), out RaycastHit hitInfo, 0.2f))
+        if (Physics.Raycast(new Ray(transform.position, Vector3.down), out var hitInfo, 0.2f))
         {
             Debug.Log("Slope normal: " + hitInfo.normal);
             // You could, for example, disallow jumps on slopes beyond a certain angle.
         }
+
         return true;
     }
 
@@ -204,25 +263,22 @@ public class PlayerController : MonoBehaviour
     {
         if (IsGrounded())
         {
-            startFall = false;
-            isFalling = false;
+            startFall = isFalling = false;
             animator.SetBool(IsFallingID, false);
             animator.SetTrigger(LandID);
-            return;
         }
-
-        if (isFalling)
-            return;
-
-        if (!startFall)
+        else if (!isFalling)
         {
-            startFall = true;
-            startFallTime = Time.time;
-        }
-        else if (Time.time >= startFallTime + fallTime)
-        {
-            isFalling = true;
-            animator.SetBool(IsFallingID, true);
+            if (!startFall)
+            {
+                startFall = true;
+                startFallTime = Time.time;
+            }
+            else if (Time.time >= startFallTime + fallTime)
+            {
+                isFalling = true;
+                animator.SetBool(IsFallingID, true);
+            }
         }
     }
 
@@ -239,12 +295,32 @@ public class PlayerController : MonoBehaviour
         {
             holdJump = false;
             // If released early while still ascending, clamp the upward velocity for a shorter jump.
-            if (verticalVelocity > 0)
+            if (verticalVelocity > Mathf.Sqrt(2f * -gravity * lowJumpHeight))
             {
-                float lowJumpVelocity = Mathf.Sqrt(2f * -gravity * lowJumpHeight);
-                if (verticalVelocity > lowJumpVelocity)
-                    verticalVelocity = lowJumpVelocity;
+                verticalVelocity = Mathf.Sqrt(2f * -gravity * lowJumpHeight);
             }
+        }
+    }
+
+    public void DashPressed(InputAction.CallbackContext context)
+    {
+        if (context.started && dashCooldownTimer <= 0f && dashCount < 1)
+        {
+            // Determine dash direction:
+            // - If movement input exists, use that.
+            // - Otherwise, use the character's current facing direction.
+            dashDirection = inputMovement.sqrMagnitude > 0.1f
+                ? new Vector3(inputMovement.x, 0f, inputMovement.y).normalized
+                : transform.forward;
+
+            // Initiate the dash.
+            isDashing = true;
+            dashTimer = dashTime; // Set dash duration
+            currentDashSpeed = dashDistance / dashTime; // Compute dash speed from distance and time
+            dashCount++; // Mark that a dash has been used for this jump
+            dashCooldownTimer = dashCooldown; // Start the cooldown timer
+
+            // (Optional) Trigger dash animation or visual effects here.
         }
     }
 
@@ -256,9 +332,9 @@ public class PlayerController : MonoBehaviour
 
     private void ApplyMovement()
     {
-        Vector3 desiredVelocity = new Vector3(inputMovement.x, 0, inputMovement.y) * maxSpeed;
-        Vector3 currentVelocity = characterController.velocity;
-        float maxSpeedChange = movementLerpSpeed * Time.deltaTime;
+        var desiredVelocity = new Vector3(inputMovement.x, 0, inputMovement.y) * maxSpeed;
+        var currentVelocity = characterController.velocity;
+        var maxSpeedChange = movementLerpSpeed * Time.deltaTime;
 
         // Smoothly interpolate the horizontal velocity.
         direction.x = Mathf.MoveTowards(currentVelocity.x, desiredVelocity.x, maxSpeedChange);
@@ -270,9 +346,9 @@ public class PlayerController : MonoBehaviour
 
     private void UpdateAnimator()
     {
-        Vector3 charVelocity = characterController.velocity;
-        Vector3 localVelocity = transform.InverseTransformDirection(charVelocity);
-        float speed = localVelocity.z;
+        var charVelocity = characterController.velocity;
+        var localVelocity = transform.InverseTransformDirection(charVelocity);
+        var speed = localVelocity.z;
         animator.SetFloat(ChrSpeedID, speed);
     }
 
@@ -281,8 +357,8 @@ public class PlayerController : MonoBehaviour
         if (inputMovement.sqrMagnitude == 0)
             return;
 
-        float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
-        float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+        var targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
+        var angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
         transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
     }
 }
