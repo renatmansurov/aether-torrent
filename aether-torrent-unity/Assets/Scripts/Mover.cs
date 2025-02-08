@@ -1,13 +1,14 @@
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Serialization;
 
 [RequireComponent(typeof(NavMeshAgent))]
 public class Mover : MonoBehaviour
 {
     public Transform target;
     public NavMeshAgent player;
-    private Ray _lastRay;
-    public Camera _mainCamera;
+    private Ray lastRay;
+    [FormerlySerializedAs("_mainCamera")] public Camera mainCamera;
     public Animator animator;
     private static readonly int ChrSpeed = Animator.StringToHash("chrSpeed");
 
@@ -28,7 +29,7 @@ public class Mover : MonoBehaviour
 
     private void MoveToCursor()
     {
-        var ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
+        var ray = mainCamera.ScreenPointToRay(Input.mousePosition);
         var hasHit = Physics.Raycast(ray, out var hit);
         if (hasHit)
         {

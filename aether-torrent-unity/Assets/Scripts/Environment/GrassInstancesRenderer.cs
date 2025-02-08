@@ -30,8 +30,8 @@ namespace Environment
 
 		private struct MeshProperties
 		{
-			public Matrix4x4 mat;
-			public Vector4 color;
+			public Matrix4x4 Mat;
+			public Vector4 Color;
 
 			public static int Size()
 			{
@@ -94,8 +94,8 @@ namespace Environment
 			for (int i = 0; i < patch.transforms.Length; i++)
 			{
 				MeshProperties props = new MeshProperties();
-				props.mat = patch.transforms[i];
-				props.color = patch.colors[i];
+				props.Mat = patch.transforms[i];
+				props.Color = patch.colors[i];
 				properties[i] = props;
 			}
 

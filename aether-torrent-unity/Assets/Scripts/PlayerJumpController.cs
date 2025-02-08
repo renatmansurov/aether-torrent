@@ -1,9 +1,10 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class PlayerJumpController : MonoBehaviour
 {
     [Header("References")]
-    public CharacterController controller; // Ensure this is assigned (or use GetComponent in Awake)
+    public CharacterController characterController; // Ensure this is assigned (or use GetComponent in Awake)
 
     [Header("Jump Settings")]
     [Tooltip("Maximum jump height when jump is fully held.")]
@@ -28,7 +29,7 @@ public class PlayerJumpController : MonoBehaviour
     void Update()
     {
         // Check if grounded and update timers
-        if (controller.isGrounded)
+        if (characterController.isGrounded)
         {
             // Reset vertical velocity when on the ground
             if (verticalVelocity < 0)
@@ -51,7 +52,7 @@ public class PlayerJumpController : MonoBehaviour
 
         // Determine if the player is allowed to jump.
         // Allowed if grounded, within coyote time, or if a double jump is available.
-        bool canJump = controller.isGrounded ||
+        bool canJump = characterController.isGrounded ||
                        (Time.time - lastGroundedTime <= coyoteTime) ||
                        (jumpCount < maxJumps);
 
@@ -79,7 +80,7 @@ public class PlayerJumpController : MonoBehaviour
 
         // Apply vertical movement using the CharacterController.
         Vector3 move = new Vector3(0, verticalVelocity, 0);
-        controller.Move(move * Time.deltaTime);
+        characterController.Move(move * Time.deltaTime);
     }
 
     void Jump()

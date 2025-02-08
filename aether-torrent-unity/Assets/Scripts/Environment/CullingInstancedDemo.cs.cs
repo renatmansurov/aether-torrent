@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.Serialization;
 
 public class CullingInstancedDemo : MonoBehaviour
 {
@@ -18,7 +19,7 @@ public class CullingInstancedDemo : MonoBehaviour
     // subdivsion of quad/octtree
     public int depth = 3;
     // swap between octree and quadtree
-    public bool Octree = true;
+    [FormerlySerializedAs("Octree")] public bool octree = true;
     // max draw distance for meshes
     public float maxDrawDistance = 125;
 
@@ -118,7 +119,7 @@ public class CullingInstancedDemo : MonoBehaviour
     void SetupQuadTree()
     {
         // create a new quadtree
-        quadTree = new QuadTreeNode(bounds, depth, Octree);
+        quadTree = new QuadTreeNode(bounds, depth, octree);
 
         //find a leaf to put every matrixs in
         for (int i = 0; i < matricesAll.Count; i++)
