@@ -1,5 +1,3 @@
-using UnityEngine;
-
 public class MovementState : CharacterState
 {
     public MovementState(PlayerController player, StateMachine stateMachine) : base(player, stateMachine)

@@ -1,5 +1,3 @@
-using UnityEngine;
-
 public abstract class CharacterState
 {
     protected readonly PlayerController Player;

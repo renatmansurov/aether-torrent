@@ -1,5 +1,3 @@
-using UnityEngine;
-
 public class FallingState : CharacterState
 {
     public FallingState(PlayerController player, StateMachine stateMachine)
@@ -16,7 +14,7 @@ public class FallingState : CharacterState
     public override void HandleInput()
     {
         // Allow a double jump if a jump input is buffered and the jump count is below max.
-        if (Player.jumpBufferCounter > 0 && JumpState.jumpCount < Player.maxJumps)
+        if (Player.jumpBufferCounter > 0 && JumpState.JumpCount < Player.maxJumps)
         {
             // Clear the buffer so that we only trigger one jump.
             Player.jumpBufferCounter = 0;

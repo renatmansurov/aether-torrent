@@ -69,8 +69,6 @@ public class PlayerController : MonoBehaviour
     // Internal state variables
     [HideInInspector] public float lastGroundedTime = -999f;
 
-
-
     private Vector2 inputMovement;
     public Vector2 inputLook;
     public Vector3 direction;
@@ -82,8 +80,8 @@ public class PlayerController : MonoBehaviour
     private float turnSmoothVelocity;
 
     // Debug Data
-    float currentHeight;
-    float lastHeight;
+    private float currentHeight;
+    private float lastHeight;
     public float lastJumpHeight;
 
     // Animator parameter hashes
@@ -96,8 +94,6 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
-
-        // Initialize the state machine with the MovementState as the starting state.
         stateMachine = new StateMachine();
         stateMachine.Initialize(new MovementState(this, stateMachine));
     }
@@ -154,20 +150,18 @@ public class PlayerController : MonoBehaviour
     public bool CanJump()
     {
         return IsGrounded() ||
-               (Time.time - lastGroundedTime <= coyoteTime) ||
-               (JumpState.jumpCount < maxJumps);
+               Time.time - lastGroundedTime <= coyoteTime ||
+               JumpState.JumpCount < maxJumps;
     }
 
     public void ApplyGravity()
     {
         if (IsGrounded() && verticalVelocity <= 0)
         {
-            verticalVelocity = (verticalVelocity < 0) ? -1f : verticalVelocity;
+            verticalVelocity = verticalVelocity < 0 ? -1f : verticalVelocity;
             lastGroundedTime = Time.time;
-            // Reset the jump count when landing:
-            JumpState.jumpCount = 0;
+            JumpState.JumpCount = 0;
             dashCount = 0;
-            // (Optional) You might also want to clear any jump-related flags here if needed.
         }
         else
         {
@@ -247,6 +241,22 @@ public class PlayerController : MonoBehaviour
         transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
     }
 
+
+    private void OnDrawGizmos()
+    {
+        Vector3 lastJumpHeightPos = new Vector3(characterController.transform.position.x, lastJumpHeight - characterController.height / 2, characterController.transform.position.z);
+        Handles.DrawWireDisc(lastJumpHeightPos, Vector3.up, 1);
+        GUIStyle style = new GUIStyle
+        {
+            normal =
+            {
+                textColor = Color.red
+            },
+            fontSize = 20
+        };
+        Handles.Label(lastJumpHeightPos, "Last Jump:" + (lastJumpHeight - characterController.height / 2).ToString(CultureInfo.InvariantCulture), style);
+    }
+
     private void MeasureHeight()
     {
         currentHeight = characterController.transform.position.y;
@@ -255,6 +265,8 @@ public class PlayerController : MonoBehaviour
 
         lastHeight = currentHeight;
     }
+
+
 
     #endregion
 
