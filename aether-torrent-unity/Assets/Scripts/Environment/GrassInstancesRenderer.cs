@@ -78,7 +78,7 @@ namespace Environment
 		private void InitializeBuffers(GrassPatch patch)
 		{
 			// Argument buffer used by DrawMeshInstancedIndirect.
-			uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
+			var args = new uint[5] { 0, 0, 0, 0, 0 };
 			// Arguments for drawing mesh.
 			// 0 == number of triangle indices, 1 == population, others are only relevant if drawing submeshes.
 			args[0] = mesh.GetIndexCount(0);
@@ -89,11 +89,11 @@ namespace Environment
 			argsBuffer.SetData(args);
 
 			// Initialize buffer with the given population.
-			MeshProperties[] properties = new MeshProperties[patch.transforms.Length];
+			var properties = new MeshProperties[patch.transforms.Length];
 
-			for (int i = 0; i < patch.transforms.Length; i++)
+			for (var i = 0; i < patch.transforms.Length; i++)
 			{
-				MeshProperties props = new MeshProperties();
+				var props = new MeshProperties();
 				props.Mat = patch.transforms[i];
 				props.Color = patch.colors[i];
 				properties[i] = props;
@@ -123,7 +123,7 @@ namespace Environment
 		private void RenderInstances()
 		{
 			Graphics.DrawMeshInstancedIndirect(mesh, 0, material, bounds, argsBuffer);
-			RenderParams rp = new RenderParams(material);
+			var rp = new RenderParams(material);
 			rp.worldBounds = new Bounds(Vector3.zero, 10000*Vector3.one); // use tighter bounds for better FOV culling
 			rp.matProps = new MaterialPropertyBlock();
 			rp.matProps.SetMatrix("_ObjectToWorld", Matrix4x4.Translate(new Vector3(-4.5f, 0, 0)));

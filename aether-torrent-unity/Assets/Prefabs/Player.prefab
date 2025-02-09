@@ -75,19 +75,33 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterController: {fileID: 5368973844731850951}
   animator: {fileID: 5193923879290210602}
-  inputMovement: {x: 0, y: 0}
-  inputLook: {x: 0, y: 0}
+  maxJumpHeight: 5
+  lowJumpHeight: 2
+  doubleJumpHeight: 5
+  gravity: -9.81
+  coyoteTime: 0.2
+  jumpBufferTime: 0.2
+  maxJumps: 2
+  jumpSustainForce: 20
+  maxJumpSustainTime: 0.2
+  doubleJumpSustainForce: 15
+  maxDoubleJumpSustainTime: 0.1
   maxSpeed: 10
   movementLerpSpeed: 60
   turnSmoothTime: 0.1
   gravityMult: 3
-  jumpPower: 10
   jumpGravityMult: 8
-  maxNumberOfJumps: 1
   fallTime: 0.5
+  dashDistance: 5
+  dashTime: 0.2
+  dashCooldown: 1
+  jumpBufferCounter: 0
+  holdJump: 0
+  lastGroundedTime: -999
+  inputLook: {x: 0, y: 0}
   direction: {x: 0, y: 0, z: 0}
-  velocity: 0
-  projectile: {fileID: 4454675293496118964, guid: 9e4c569cf15b2b04ba90701a556cf68f, type: 3}
+  verticalVelocity: 0
+  lastJumpHeight: 0
 --- !u!114 &6636406342437442726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -217,6 +231,22 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: 20638d55-d04b-45b5-9464-153f97f5b789
     m_ActionName: UI/TrackedDeviceOrientation
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 8191334594117864295}
+        m_TargetAssemblyTypeName: PlayerController, Assembly-CSharp
+        m_MethodName: DashPressed
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: f9449f5d-237c-47f3-a65c-c9c2e28ae55a
+    m_ActionName: 'Player/Dash[/Keyboard/leftShift,/DualSenseGamepadHID/buttonEast]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: Gamepad
   m_DefaultActionMap: Player

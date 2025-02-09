@@ -45,7 +45,7 @@ namespace Environment
 
 		float RemapTo01(float value, float min, float max)
 		{
-			float remapped = max + (value - min) * (max - min);
+			var remapped = max + (value - min) * (max - min);
 			return Mathf.Clamp01(remapped);
 		}
 
@@ -60,8 +60,8 @@ namespace Environment
 			cloudsSpdPostRemap = new Vector4(cloudsTurbulenceSpeed, bands, overcast, cloudContrast);
 			LoopKeys(lightGradient);
 			LoopKeys(shadowGradient);
-			float dayNormalizedTime = (timeOfDay - dayTime.x) / (dayTime.y - dayTime.x);
-			float nightNormalizedTime = (timeOfDay - nightTime.x) / (nightTime.y - nightTime.x);
+			var dayNormalizedTime = (timeOfDay - dayTime.x) / (dayTime.y - dayTime.x);
+			var nightNormalizedTime = (timeOfDay - nightTime.x) / (nightTime.y - nightTime.x);
 			globalLightColor = lightGradient.Evaluate(dayNormalizedTime);
 			globalShadowColor = shadowGradient.Evaluate(dayNormalizedTime);
 			mainLightsTimeline.time = dayNormalizedTime * 4f;

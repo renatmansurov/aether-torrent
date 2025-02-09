@@ -38,7 +38,7 @@ public class QuadTreeNode
         }
         else
         {
-            foreach (QuadTreeNode child in children)
+            foreach (var child in children)
             {
                 child.RetrieveAllLeaves(list);
             }
@@ -50,19 +50,19 @@ public class QuadTreeNode
     {
         // build a quadtree
         // size/4 for offsetting positions for childrens bounds centers
-        Vector3 size = MBounds.size;
+        var size = MBounds.size;
         size /= 4.0f;
         // size/2 for childrens bounds size
-        Vector3 childSize = MBounds.size / 2.0f;
+        var childSize = MBounds.size / 2.0f;
         // y size is total size because we dont subdivide in that axis
         childSize.y = MBounds.size.y;
-        Vector3 center = MBounds.center;
+        var center = MBounds.center;
 
         // create bounds for every corner, only in x and z 
-        Bounds topLeft = new Bounds(new Vector3(center.x - size.x, center.y, center.z - size.z), childSize);
-        Bounds bottomRight = new Bounds(new Vector3(center.x + size.x, center.y, center.z + size.z), childSize);
-        Bounds topRight = new Bounds(new Vector3(center.x - size.x, center.y, center.z + size.z), childSize);
-        Bounds bottomLeft = new Bounds(new Vector3(center.x + size.x, center.y, center.z - size.z), childSize);
+        var topLeft = new Bounds(new Vector3(center.x - size.x, center.y, center.z - size.z), childSize);
+        var bottomRight = new Bounds(new Vector3(center.x + size.x, center.y, center.z + size.z), childSize);
+        var topRight = new Bounds(new Vector3(center.x - size.x, center.y, center.z + size.z), childSize);
+        var bottomLeft = new Bounds(new Vector3(center.x + size.x, center.y, center.z - size.z), childSize);
 
         // add children by creating a new node
         children.Add(new QuadTreeNode(topLeft, depth - 1, octree));
@@ -75,23 +75,23 @@ public class QuadTreeNode
     {
         // build a quadtree
         // size/4 for offsetting positions for childrens bounds centers
-        Vector3 size = MBounds.size;
+        var size = MBounds.size;
         size /= 4.0f;
         // size/2 for childrens bounds size
-        Vector3 childSize = MBounds.size / 2.0f;
-        Vector3 center = MBounds.center;
+        var childSize = MBounds.size / 2.0f;
+        var center = MBounds.center;
 
         // layer 1, negative y axis offset
-        Bounds topLeft = new Bounds(new Vector3(center.x - size.x, center.y - size.y, center.z - size.z), childSize);
-        Bounds bottomRight = new Bounds(new Vector3(center.x + size.x, center.y - size.y, center.z + size.z), childSize);
-        Bounds topRight = new Bounds(new Vector3(center.x - size.x, center.y - size.y, center.z + size.z), childSize);
-        Bounds bottomLeft = new Bounds(new Vector3(center.x + size.x, center.y - size.y, center.z - size.z), childSize);
+        var topLeft = new Bounds(new Vector3(center.x - size.x, center.y - size.y, center.z - size.z), childSize);
+        var bottomRight = new Bounds(new Vector3(center.x + size.x, center.y - size.y, center.z + size.z), childSize);
+        var topRight = new Bounds(new Vector3(center.x - size.x, center.y - size.y, center.z + size.z), childSize);
+        var bottomLeft = new Bounds(new Vector3(center.x + size.x, center.y - size.y, center.z - size.z), childSize);
 
         // layer 2, positive y axis offset
-        Bounds topLeft2 = new Bounds(new Vector3(center.x - size.x, center.y + size.y, center.z - size.z), childSize);
-        Bounds bottomRight2 = new Bounds(new Vector3(center.x + size.x, center.y + size.y, center.z + size.z), childSize);
-        Bounds topRight2 = new Bounds(new Vector3(center.x - size.x, center.y + size.y, center.z + size.z), childSize);
-        Bounds bottomLeft2 = new Bounds(new Vector3(center.x + size.x, center.y + size.y, center.z - size.z), childSize);
+        var topLeft2 = new Bounds(new Vector3(center.x - size.x, center.y + size.y, center.z - size.z), childSize);
+        var bottomRight2 = new Bounds(new Vector3(center.x + size.x, center.y + size.y, center.z + size.z), childSize);
+        var topRight2 = new Bounds(new Vector3(center.x - size.x, center.y + size.y, center.z + size.z), childSize);
+        var bottomLeft2 = new Bounds(new Vector3(center.x + size.x, center.y + size.y, center.z - size.z), childSize);
 
         // add both layers of children by creating a new node for each
         children.Add(new QuadTreeNode(topLeft, depth - 1, octree));
@@ -119,7 +119,7 @@ public class QuadTreeNode
             // if we have children, check those
             else
             {
-                foreach (QuadTreeNode child in children)
+                foreach (var child in children)
                 {
                     child.RetrieveLeaves(frustum, boundsList, visibleMatrixList);
                 }
@@ -140,7 +140,7 @@ public class QuadTreeNode
             // if we have children, check those
             else
             {
-                foreach (QuadTreeNode child in children)
+                foreach (var child in children)
                 {
                     child.FindLeafForPoint(point);
                 }
@@ -151,11 +151,11 @@ public class QuadTreeNode
     public bool ClearEmpty()
     {
         // if the node is empty, we can safely delete it
-        bool delete = false;
+        var delete = false;
         if (children.Count > 0)
         {
             // dont delete things from a list when iterating forward, because you can miss items, so we are iterating backwards here
-            int i = children.Count;
+            var i = children.Count;
             while (i > 0)
             {
                 i--;

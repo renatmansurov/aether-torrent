@@ -48,13 +48,13 @@ public class CullingInstancedDemo : MonoBehaviour
     {
         cameraFrustumPlanes = new Plane[6];
         // build a list of random matrices for every instance
-        for (int i = 0; i < instances; i++)
+        for (var i = 0; i < instances; i++)
         {
-            Vector3 position = new Vector3(Random.Range(-range, range), Random.Range(-range, range), Random.Range(-range, range));
-            Quaternion rotation = Quaternion.Euler(Random.Range(-180, 180), Random.Range(-180, 180), Random.Range(-180, 180));
-            Vector3 scale = new Vector3(Random.Range(0.5f, 1.5f), Random.Range(0.5f, 1.5f), Random.Range(0.5f, 1.5f));
+            var position = new Vector3(Random.Range(-range, range), Random.Range(-range, range), Random.Range(-range, range));
+            var rotation = Quaternion.Euler(Random.Range(-180, 180), Random.Range(-180, 180), Random.Range(-180, 180));
+            var scale = new Vector3(Random.Range(0.5f, 1.5f), Random.Range(0.5f, 1.5f), Random.Range(0.5f, 1.5f));
 
-            Matrix4x4 mat = Matrix4x4.TRS(position, rotation, scale);
+            var mat = Matrix4x4.TRS(position, rotation, scale);
             matricesAll.Add(mat);
         }
         SetBounds();
@@ -73,7 +73,7 @@ public class CullingInstancedDemo : MonoBehaviour
         if (drawBounds)
         {
             Gizmos.color = new Color(0, 1, 0, 0.3f);
-            for (int i = 0; i < boundsListVisible.Count; i++)
+            for (var i = 0; i < boundsListVisible.Count; i++)
             {
                 Gizmos.DrawWireCube(boundsListVisible[i].center, boundsListVisible[i].size);
             }
@@ -87,7 +87,7 @@ public class CullingInstancedDemo : MonoBehaviour
         // create the frustum planes
         cameraOriginalFarPlane = Camera.main.farClipPlane;
         Camera.main.farClipPlane = maxDrawDistance;
-        Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
+        var planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
         // set back to normal 
         Camera.main.farClipPlane = cameraOriginalFarPlane;
         // clear lists
@@ -109,7 +109,7 @@ public class CullingInstancedDemo : MonoBehaviour
     {
         // grow bounds so all points are within it
         bounds = new Bounds(matricesAll[0].GetPosition(), Vector3.one);
-        for (int i = 0; i < matricesAll.Count; i++)
+        for (var i = 0; i < matricesAll.Count; i++)
         {
             bounds.Encapsulate(matricesAll[i].GetPosition());
         }
@@ -122,7 +122,7 @@ public class CullingInstancedDemo : MonoBehaviour
         quadTree = new QuadTreeNode(bounds, depth, octree);
 
         //find a leaf to put every matrixs in
-        for (int i = 0; i < matricesAll.Count; i++)
+        for (var i = 0; i < matricesAll.Count; i++)
         {
             quadTree.FindLeafForPoint(matricesAll[i]);
         }
