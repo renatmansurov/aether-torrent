@@ -28,9 +28,7 @@ public class JumpState : CharacterState
         float targetImpulse = Mathf.Sqrt(2f * -Player.gravity * jumpHeight);
 
         // Apply the jump impulse (if already moving upward, choose the higher velocity).
-        Player.verticalVelocity = (Player.verticalVelocity > 0) ?
-                                  Mathf.Max(Player.verticalVelocity, targetImpulse) :
-                                  targetImpulse;
+        Player.verticalVelocity = (Player.verticalVelocity > 0) ? Mathf.Max(Player.verticalVelocity, targetImpulse) : targetImpulse;
 
         // Set jump-related flags.
         jumping = true;
@@ -45,7 +43,7 @@ public class JumpState : CharacterState
         // **New Double Jump Check:**
         // If a jump input is buffered (set in PlayerController) and we haven't reached max jumps,
         // trigger a new jump (i.e. a double jump) by transitioning to a new JumpState.
-        if (Player.jumpBufferCounter > 0 && jumpCount < Player.maxJumps)
+        if (Player.jumpBufferCounter > 0 && jumpCount < Player.maxJumps - 1)
         {
             // Clear the jump buffer so that we don't trigger multiple jumps.
             Player.jumpBufferCounter = 0;
@@ -66,7 +64,7 @@ public class JumpState : CharacterState
         // 1. Check if the upward motion has ceased.
         if (Player.verticalVelocity <= 0)
         {
-            StateMachine.ChangeState(new MovementState(Player, StateMachine));
+            StateMachine.ChangeState(new FallingState(Player, StateMachine));
             return;
         }
 
@@ -91,6 +89,7 @@ public class JumpState : CharacterState
                 {
                     Player.verticalVelocity = lowJumpVelocity;
                 }
+
                 jumping = false;
             }
         }
