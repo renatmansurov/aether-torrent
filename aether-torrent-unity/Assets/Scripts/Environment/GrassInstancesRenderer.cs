@@ -81,10 +81,10 @@ namespace Environment
 			uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
 			// Arguments for drawing mesh.
 			// 0 == number of triangle indices, 1 == population, others are only relevant if drawing submeshes.
-			args[0] = (uint)mesh.GetIndexCount(0);
+			args[0] = mesh.GetIndexCount(0);
 			args[1] = (uint)patch.transforms.Length;
-			args[2] = (uint)mesh.GetIndexStart(0);
-			args[3] = (uint)mesh.GetBaseVertex(0);
+			args[2] = mesh.GetIndexStart(0);
+			args[3] = mesh.GetBaseVertex(0);
 			argsBuffer = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
 			argsBuffer.SetData(args);
 

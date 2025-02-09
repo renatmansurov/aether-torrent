@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using System.Globalization;
 using UnityEditor;
 using UnityEngine;
@@ -55,28 +53,28 @@ public class PlayerController : MonoBehaviour
     public float dashTime = 0.2f; // Total time the dash lasts
     public float dashCooldown = 1f; // Cooldown period before dash can be used again
 
-    private bool isDashing = false; // Whether the player is currently dashing
-    private float dashTimer = 0f; // Timer for the duration of the current dash
+    private bool isDashing; // Whether the player is currently dashing
+    private float dashTimer; // Timer for the duration of the current dash
     private Vector3 dashDirection; // The normalized direction in which to dash
-    private float dashCooldownTimer = 0f; // Internal timer for dash cooldown
-    private int dashCount = 0; // Counts dashes used in the current jump (max 1)
-    private float currentDashSpeed = 0f; // Computed speed = dashDistance / dashTime
+    private float dashCooldownTimer; // Internal timer for dash cooldown
+    private int dashCount; // Counts dashes used in the current jump (max 1)
+    private float currentDashSpeed; // Computed speed = dashDistance / dashTime
 
     // Internal state variables
     private float lastGroundedTime = -999f;
-    private float jumpBufferCounter = 0f;
-    private int jumpCount = 0;
-    private float jumpSustainTimer = 0f;
+    private float jumpBufferCounter;
+    private int jumpCount;
+    private float jumpSustainTimer;
 
     private Vector2 inputMovement;
     public Vector2 inputLook;
     public Vector3 direction;
     public float verticalVelocity;
 
-    private bool holdJump = false;
-    private bool jumping = false;
-    private bool isFalling = false;
-    private bool startFall = false;
+    private bool holdJump;
+    private bool jumping;
+    private bool isFalling;
+    private bool startFall;
     private float startFallTime;
     private float turnSmoothVelocity;
 

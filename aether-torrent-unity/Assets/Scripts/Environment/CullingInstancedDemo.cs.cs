@@ -1,5 +1,5 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Serialization;
 
 public class CullingInstancedDemo : MonoBehaviour
