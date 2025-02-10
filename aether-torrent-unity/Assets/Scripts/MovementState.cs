@@ -7,6 +7,7 @@ public class MovementState : CharacterState
     public override void Enter()
     {
         // Optionally trigger movement animation here.
+        Player.gravity = PlayerController.BaseGravity;
         Player.animator.SetFloat("chrSpeed", 0f);
     }
 
@@ -22,8 +23,6 @@ public class MovementState : CharacterState
     public override void Update()
     {
         // Handle regular movement and update animations.
-        Player.ApplyMovement();
-        Player.UpdateAnimator();
     }
 
     public override void FixedUpdate()

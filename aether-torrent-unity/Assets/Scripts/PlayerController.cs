@@ -1,7 +1,11 @@
+// Assets/Scripts/PlayerController.cs
+
+using System;
 using System.Globalization;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
@@ -9,18 +13,18 @@ public class PlayerController : MonoBehaviour
     [Header("References")] public CharacterController characterController;
     public Animator animator;
     private StateMachine stateMachine;
+    private MovementController movementController;
 
-    [Header("Jump Settings")] [Tooltip("Maximum jump height when jump is fully held.")]
+    [Header("Jump Settings")]
     public float maxJumpHeight = 5f;
-
-    [Tooltip("Low jump height when jump is tapped.")]
-    public float lowJumpHeight = 2f;
-
-    [Tooltip("Maximum jump height for a double jump.")]
-    public float doubleJumpHeight = 3f;
-
-    [Tooltip("Gravity (should be a negative value).")]
+    public float doubleJumpMult = 1f;
+    public float maxJumpTime = .5f;
     public float gravity = -9.81f;
+    public float fallGravityMult = 2f;
+    public const float BaseGravity = -9.81f;
+    public float jumpGravity;
+    public float initialJumpVelocity;
+
 
     [Tooltip("Time allowed after leaving the ground to still jump (coyote time).")]
     public float coyoteTime = 0.2f;
@@ -31,23 +35,9 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Total jumps allowed (2 for double jump).")] [SerializeField]
     public int maxJumps = 2;
 
-    [Header("Jump Sustain Settings")] [Tooltip("Additional upward force applied while the jump button is held on the first jump.")] [SerializeField]
-    public float jumpSustainForce = 20f;
-
-    [Tooltip("Maximum duration (in seconds) for the jump sustain phase on the first jump.")] [SerializeField]
-    public float maxJumpSustainTime = 0.2f;
-
-    [Tooltip("Additional upward force applied while the jump button is held on the double jump.")] [SerializeField]
-    public float doubleJumpSustainForce = 10f;
-
-    [Tooltip("Maximum duration (in seconds) for the jump sustain phase on the double jump.")] [SerializeField]
-    public float maxDoubleJumpSustainTime = 0.1f;
-
     [Header("Movement Settings")] public float maxSpeed;
     [SerializeField] private float movementLerpSpeed;
     [SerializeField] private float turnSmoothTime = 0.1f;
-    [SerializeField] private float gravityMult = 3f;
-    [SerializeField] private float jumpGravityMult = 3f;
     [SerializeField] private float fallTime;
 
     [Header("Dash Settings")] public float dashDistance = 5f;
@@ -64,7 +54,6 @@ public class PlayerController : MonoBehaviour
 
     public float jumpBufferCounter;
     public bool holdJump;
-
 
     // Internal state variables
     [HideInInspector] public float lastGroundedTime = -999f;
@@ -90,30 +79,42 @@ public class PlayerController : MonoBehaviour
     private static readonly int IsFallingID = Animator.StringToHash("isFalling");
     private static readonly int LandID = Animator.StringToHash("land");
 
-
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
         stateMachine = new StateMachine();
         stateMachine.Initialize(new MovementState(this, stateMachine));
+        movementController = new MovementController(characterController, animator, maxSpeed, movementLerpSpeed, turnSmoothTime, ChrSpeedID);
+        JumpVariablesSetup();
+    }
+
+    private void JumpVariablesSetup()
+    {
+        var timeToApex = maxJumpTime / 2f;
+        jumpGravity = -2f * maxJumpHeight / Mathf.Pow(timeToApex, 2f);
+        initialJumpVelocity = 2 * maxJumpHeight / timeToApex;
+    }
+
+    private void OnValidate()
+    {
+        JumpVariablesSetup();
     }
 
     private void Update()
     {
-        // Decrement jump buffer timer if active.
         if (jumpBufferCounter > 0f)
             jumpBufferCounter -= Time.deltaTime;
 
-        // Decrement dash cooldown timer if active.
         if (dashCooldownTimer > 0f)
             dashCooldownTimer -= Time.deltaTime;
 
-        // Let the state machine handle input and update logic.
         stateMachine.HandleInput();
         stateMachine.Update();
 
-        ApplyRotation();
-        UpdateAnimator();
+        movementController.ApplyRotation();
+        movementController.VerticalVelocity = verticalVelocity;
+        movementController.ApplyMovement();
+        movementController.UpdateAnimator();
 
         if (!IsGrounded() || startFall || isFalling)
             CheckFall();
@@ -125,9 +126,8 @@ public class PlayerController : MonoBehaviour
     {
         if (isDashing)
         {
-            ApplyStandardGravity();
             var dashMove = dashDirection * currentDashSpeed;
-            dashMove.y = verticalVelocity;
+            //dashMove.y = verticalVelocity;
             characterController.Move(dashMove * Time.fixedDeltaTime);
 
             if ((dashTimer -= Time.fixedDeltaTime) <= 0f)
@@ -135,7 +135,6 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            // Delegate physics updates to the state machine.
             stateMachine.FixedUpdate();
         }
     }
@@ -144,9 +143,6 @@ public class PlayerController : MonoBehaviour
 
     public bool IsGrounded() => characterController.isGrounded;
 
-    /// <summary>
-    /// Checks if the player is allowed to jump.
-    /// </summary>
     public bool CanJump()
     {
         return IsGrounded() ||
@@ -156,26 +152,21 @@ public class PlayerController : MonoBehaviour
 
     public void ApplyGravity()
     {
-        if (IsGrounded() && verticalVelocity <= 0)
+        if (IsGrounded() && verticalVelocity <= 0f)
         {
-            verticalVelocity = verticalVelocity < 0 ? -1f : verticalVelocity;
+            // Slight downward velocity to keep the character grounded.
+            verticalVelocity = verticalVelocity < 0f ? -0.1f : verticalVelocity;
             lastGroundedTime = Time.time;
             JumpState.JumpCount = 0;
             dashCount = 0;
         }
         else
         {
-            ApplyStandardGravity();
+            var previousYVelocity = verticalVelocity;
+            var newYVelocity = verticalVelocity + gravity * Time.deltaTime;
+            var nextYVelocity = (previousYVelocity + newYVelocity) * 0.5f;
+            verticalVelocity = nextYVelocity;
         }
-        direction.y = verticalVelocity;
-    }
-
-
-
-    private void ApplyStandardGravity()
-    {
-        var currentGravityMult = verticalVelocity < 0 ? jumpGravityMult + gravityMult : gravityMult;
-        verticalVelocity += gravity * currentGravityMult * Time.fixedDeltaTime;
     }
 
     public bool CheckSlope()
@@ -211,36 +202,9 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    public void ApplyMovement()
-    {
-        var desiredVelocity = new Vector3(inputMovement.x, 0, inputMovement.y) * maxSpeed;
-        var currentVelocity = characterController.velocity;
-        var maxSpeedChange = movementLerpSpeed * Time.deltaTime;
+    #endregion
 
-        direction.x = Mathf.MoveTowards(currentVelocity.x, desiredVelocity.x, maxSpeedChange);
-        direction.z = Mathf.MoveTowards(currentVelocity.z, desiredVelocity.z, maxSpeedChange);
-
-        characterController.Move(direction * Time.deltaTime);
-    }
-
-    public void UpdateAnimator()
-    {
-        var charVelocity = characterController.velocity;
-        var localVelocity = transform.InverseTransformDirection(charVelocity);
-        var speed = localVelocity.z;
-        animator.SetFloat(ChrSpeedID, speed);
-    }
-
-    private void ApplyRotation()
-    {
-        if (inputMovement.sqrMagnitude == 0)
-            return;
-
-        var targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
-        var angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
-        transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
-    }
-
+    #region Debug
 
     private void OnDrawGizmos()
     {
@@ -265,8 +229,6 @@ public class PlayerController : MonoBehaviour
 
         lastHeight = currentHeight;
     }
-
-
 
     #endregion
 
@@ -304,6 +266,7 @@ public class PlayerController : MonoBehaviour
     public void InputMovement(InputAction.CallbackContext context)
     {
         inputMovement = context.ReadValue<Vector2>();
+        movementController.SetInputMovement(inputMovement);
     }
 
     #endregion

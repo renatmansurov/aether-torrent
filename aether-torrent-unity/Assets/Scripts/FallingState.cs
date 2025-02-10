@@ -1,3 +1,5 @@
+using UnityEngine;
+
 public class FallingState : CharacterState
 {
     public FallingState(PlayerController player, StateMachine stateMachine)
@@ -7,6 +9,8 @@ public class FallingState : CharacterState
 
     public override void Enter()
     {
+        Debug.Log("Falling");
+        Player.gravity *= Player.fallGravityMult;
         // Optionally, trigger falling animation.
         // For example: Player.animator.SetBool("isFalling", true);
     }
@@ -26,20 +30,17 @@ public class FallingState : CharacterState
 
     public override void Update()
     {
-        // If the player has landed, exit FallingState.
         if (Player.IsGrounded())
         {
             // Optionally, reset falling animation parameters.
             // Player.animator.SetBool("isFalling", false);
+            Player.gravity = PlayerController.BaseGravity;
             StateMachine.ChangeState(new MovementState(Player, StateMachine));
-            return;
         }
     }
 
     public override void FixedUpdate()
     {
-        // Apply general gravity and horizontal movement.
         Player.ApplyGravity();
-        Player.ApplyMovement();
     }
 }
