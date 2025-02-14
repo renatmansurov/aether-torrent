@@ -38,12 +38,13 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float turnSmoothTime = 0.1f;
     [SerializeField] private float fallTime;
 
-    [Header("Dash Settings")] public float dashDuration = 0.2f;
+    [Header("Dash Settings")]
+    public float dashDuration = 0.2f;
     public float dashCooldown = 1f;
+    public float dashSpeed;
     public float dashThreshold = 1f;
     public float maxFallLimit = 2f;
     public AnimationCurve dashCurve;
-    public float dashSpeed;
 
     // Dash internal state (remains as provided)
     public bool isDashing;
