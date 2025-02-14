@@ -2,10 +2,8 @@ using UnityEngine;
 
 public class JumpState : CharacterState
 {
-    // Static jumpCount tracks the total number of jumps performed in the air.
     public static int JumpCount;
     private bool jumping;
-
     private float jumpGravity;
 
     public JumpState(PlayerController player, StateMachine stateMachine) : base(player, stateMachine)
@@ -26,7 +24,7 @@ public class JumpState : CharacterState
         JumpCount++;
 
         // (Optional) Trigger jump animation.
-        // Player.animator.SetTrigger(Player.JumpID);
+        //Player.animator.SetTrigger(Player.JumpID);
     }
 
     public override void HandleInput()
@@ -60,7 +58,7 @@ public class JumpState : CharacterState
             }
             else if (!Player.holdJump)
             {
-                Player.gravity = Player.jumpGravity * Player.fallGravityMult;
+                Player.gravity = Player.jumpGravity * Player.jumpFallGravityMult;
                 jumping = false;
             }
         }

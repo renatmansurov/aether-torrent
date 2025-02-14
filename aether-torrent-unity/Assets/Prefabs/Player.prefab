@@ -224,6 +224,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterController: {fileID: 5368973844731850951}
   animator: {fileID: 5193923879290210602}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 128
   maxJumpHeight: 4
   doubleJumpMult: 0.9
   maxJumpTime: 0.5
@@ -238,16 +244,30 @@ MonoBehaviour:
   movementLerpSpeed: 60
   turnSmoothTime: 0.1
   fallTime: 0.5
-  dashDistance: 5
-  dashTime: 0.2
-  dashCooldown: 1
+  dashDuration: 0.2
+  dashCooldown: 0.1
+  dashThreshold: 2
+  maxFallLimit: 2
+  dashCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  dashSpeed: 30
+  isDashing: 0
+  dashCooldownTimer: 0
+  dashCount: 0
   jumpBufferCounter: 0
   holdJump: 0
   lastGroundedTime: -999
+  inputMovement: {x: 0, y: 0}
   inputLook: {x: 0, y: 0}
   direction: {x: 0, y: 0, z: 0}
   verticalVelocity: 0
   lastJumpHeight: 0
+  currentDashTarget: {x: 0, y: 0, z: 0}
+  currentDashStart: {x: 0, y: 0, z: 0}
 --- !u!114 &6636406342437442726
 MonoBehaviour:
   m_ObjectHideFlags: 0

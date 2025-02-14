@@ -1,6 +1,5 @@
 // Assets/Scripts/PlayerController.cs
 
-using System;
 using System.Globalization;
 using UnityEditor;
 using UnityEngine;
@@ -12,44 +11,46 @@ public class PlayerController : MonoBehaviour
 {
     [Header("References")] public CharacterController characterController;
     public Animator animator;
-    private StateMachine stateMachine;
+    private StateMachine playerStateMachine;
     private MovementController movementController;
 
-    [Header("Jump Settings")]
-    public float maxJumpHeight = 5f;
+    [Header("Layer Masks")] public LayerMask groundLayer;
+    public LayerMask obstacleLayer;
+
+    [Header("Jump Settings")] public float maxJumpHeight = 5f;
     public float doubleJumpMult = 1f;
     public float maxJumpTime = .5f;
     public float gravity = -9.81f;
-    public float fallGravityMult = 2f;
-    public const float BaseGravity = -9.81f;
+
+    [FormerlySerializedAs("fallGravityMult")]
+    public float jumpFallGravityMult = 2f;
+
+    public const float BaseGravity = -50;
     public float jumpGravity;
     public float initialJumpVelocity;
-
-
-    [Tooltip("Time allowed after leaving the ground to still jump (coyote time).")]
     public float coyoteTime = 0.2f;
-
-    [Tooltip("Time window to buffer a jump input before landing.")]
     public float jumpBufferTime = 0.2f;
-
-    [Tooltip("Total jumps allowed (2 for double jump).")] [SerializeField]
     public int maxJumps = 2;
+    public float hoverGravity = -9.81f;
 
     [Header("Movement Settings")] public float maxSpeed;
     [SerializeField] private float movementLerpSpeed;
     [SerializeField] private float turnSmoothTime = 0.1f;
     [SerializeField] private float fallTime;
 
-    [Header("Dash Settings")] public float dashDistance = 5f;
-    public float dashTime = 0.2f;
+    [Header("Dash Settings")] public float dashDuration = 0.2f;
     public float dashCooldown = 1f;
+    public float dashThreshold = 1f;
+    public float maxFallLimit = 2f;
+    public AnimationCurve dashCurve;
+    public float dashSpeed;
 
     // Dash internal state (remains as provided)
-    private bool isDashing;
+    public bool isDashing;
     private float dashTimer;
     private Vector3 dashDirection;
-    private float dashCooldownTimer;
-    private int dashCount;
+    public float dashCooldownTimer;
+    public int dashCount;
     private float currentDashSpeed;
 
     public float jumpBufferCounter;
@@ -58,7 +59,7 @@ public class PlayerController : MonoBehaviour
     // Internal state variables
     [HideInInspector] public float lastGroundedTime = -999f;
 
-    private Vector2 inputMovement;
+    public Vector2 inputMovement;
     public Vector2 inputLook;
     public Vector3 direction;
     public float verticalVelocity;
@@ -72,18 +73,20 @@ public class PlayerController : MonoBehaviour
     private float currentHeight;
     private float lastHeight;
     public float lastJumpHeight;
+    public Vector3 currentDashTarget;
+    public Vector3 currentDashStart;
 
     // Animator parameter hashes
-    private static readonly int ChrSpeedID = Animator.StringToHash("chrSpeed");
-    private static readonly int JumpID = Animator.StringToHash("jump");
-    private static readonly int IsFallingID = Animator.StringToHash("isFalling");
-    private static readonly int LandID = Animator.StringToHash("land");
+    public static readonly int ChrSpeedID = Animator.StringToHash("chrSpeed");
+    public static readonly int JumpID = Animator.StringToHash("jump");
+    public static readonly int IsFallingID = Animator.StringToHash("isFalling");
+    public static readonly int LandID = Animator.StringToHash("land");
 
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
-        stateMachine = new StateMachine();
-        stateMachine.Initialize(new MovementState(this, stateMachine));
+        playerStateMachine = new StateMachine();
+        playerStateMachine.Initialize(new MovementState(this, playerStateMachine));
         movementController = new MovementController(characterController, animator, maxSpeed, movementLerpSpeed, turnSmoothTime, ChrSpeedID);
         JumpVariablesSetup();
     }
@@ -108,13 +111,21 @@ public class PlayerController : MonoBehaviour
         if (dashCooldownTimer > 0f)
             dashCooldownTimer -= Time.deltaTime;
 
-        stateMachine.HandleInput();
-        stateMachine.Update();
+        playerStateMachine.HandleInput();
+        playerStateMachine.Update();
 
+        // Always apply rotation even while dashing
         movementController.ApplyRotation();
+
+        // Set vertical velocity regardless of state
         movementController.VerticalVelocity = verticalVelocity;
-        movementController.ApplyMovement();
-        movementController.UpdateAnimator();
+
+        // Only apply movement and update animator when not dashing
+        //if (!isDashing)
+        {
+            movementController.ApplyMovement();
+            movementController.UpdateAnimator();
+        }
 
         if (!IsGrounded() || startFall || isFalling)
             CheckFall();
@@ -122,21 +133,32 @@ public class PlayerController : MonoBehaviour
         MeasureHeight();
     }
 
+    private void OnGUI()
+    {
+        GUIStyle style = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 50,
+            normal =
+            {
+                textColor = Color.red
+            }
+        };
+        GUIStyle styleSmall = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 30,
+            normal =
+            {
+                textColor = Color.black
+            }
+        };
+        GUILayout.Label("State:" + playerStateMachine.CurrentState, style);
+        GUILayout.Label("Vertical Velocity: " + verticalVelocity, styleSmall);
+        GUILayout.Label("Gravity: " + gravity, styleSmall);
+    }
+
     private void FixedUpdate()
     {
-        if (isDashing)
-        {
-            var dashMove = dashDirection * currentDashSpeed;
-            //dashMove.y = verticalVelocity;
-            characterController.Move(dashMove * Time.fixedDeltaTime);
-
-            if ((dashTimer -= Time.fixedDeltaTime) <= 0f)
-                isDashing = false;
-        }
-        else
-        {
-            stateMachine.FixedUpdate();
-        }
+        playerStateMachine.FixedUpdate();
     }
 
     #region Helper Methods
@@ -208,9 +230,13 @@ public class PlayerController : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        Vector3 lastJumpHeightPos = new Vector3(characterController.transform.position.x, lastJumpHeight - characterController.height / 2, characterController.transform.position.z);
+        Gizmos.color = new Color(1, 0, 0, 0.5f);
+        Gizmos.DrawLine(currentDashStart, currentDashTarget);
+        Gizmos.DrawCube(currentDashTarget, characterController.bounds.size);
+        Gizmos.DrawCube(currentDashStart, characterController.bounds.size);
+        var lastJumpHeightPos = new Vector3(characterController.transform.position.x, lastJumpHeight - characterController.height / 2, characterController.transform.position.z);
         Handles.DrawWireDisc(lastJumpHeightPos, Vector3.up, 1);
-        GUIStyle style = new GUIStyle
+        var style = new GUIStyle
         {
             normal =
             {
@@ -251,15 +277,7 @@ public class PlayerController : MonoBehaviour
     {
         if (context.started && dashCooldownTimer <= 0f && dashCount < 1)
         {
-            dashDirection = inputMovement.sqrMagnitude > 0.1f
-                ? new Vector3(inputMovement.x, 0f, inputMovement.y).normalized
-                : transform.forward;
-
-            isDashing = true;
-            dashTimer = dashTime;
-            currentDashSpeed = dashDistance / dashTime;
-            dashCount++;
-            dashCooldownTimer = dashCooldown;
+            playerStateMachine.ChangeState(new DashState(this, playerStateMachine));
         }
     }
 
