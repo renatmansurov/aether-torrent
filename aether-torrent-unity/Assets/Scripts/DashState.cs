@@ -1,11 +1,14 @@
 // Assets/Scripts/DashState.cs
 
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class DashState : CharacterState
 {
     private float dashTimer;
     private Vector3 dashDirection;
+    private bool dashIsSafe;
+    private float dashNormalizedTimer;
 
     public DashState(PlayerController player, StateMachine stateMachine) : base(player, stateMachine)
     {
@@ -31,11 +34,7 @@ public class DashState : CharacterState
             : Player.transform.forward;
 
         // Record dash start and target positions for debugging (optional)
-        Player.currentDashStart = Player.transform.position;
-        Player.currentDashTarget = Player.transform.position + dashDirection * (Player.dashSpeed * Player.dashDuration);
-
-        // (Optional) Trigger dash animation here
-        // Player.animator.SetTrigger("Dash");
+        Player.animator.SetTrigger("Dash");
     }
 
     public override void HandleInput()
@@ -43,11 +42,12 @@ public class DashState : CharacterState
         // Input handling during dash can be ignored or limited
     }
 
+
     public override void Update()
     {
         // Decrease the dash timer
         dashTimer -= Time.deltaTime;
-
+        dashNormalizedTimer = 1 - dashTimer / Player.dashDuration;
         // End dash state once the dash duration is complete
         if (dashTimer <= 0)
         {
@@ -56,10 +56,14 @@ public class DashState : CharacterState
         }
     }
 
+    public override void DrawGizmo()
+    {
+        Gizmos.color = new Color(1, 0, 0, 0.5f);
+    }
+
     public override void FixedUpdate()
     {
-        // Compute the dash movement and move the character controller
         Vector3 dashMovement = dashDirection * (Player.dashSpeed * Time.fixedDeltaTime);
-        Player.characterController.Move(dashMovement);
+            Player.characterController.Move(dashMovement);
     }
 }

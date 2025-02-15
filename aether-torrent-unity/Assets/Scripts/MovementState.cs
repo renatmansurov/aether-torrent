@@ -18,11 +18,6 @@ public class MovementState : CharacterState
         {
             StateMachine.ChangeState(new JumpState(Player, StateMachine));
         }
-
-        if (!Player.IsGrounded() && Player.verticalVelocity < -0.2f)
-        {
-            StateMachine.ChangeState(new FallingState(Player, StateMachine));
-        }
     }
 
     public override void Update()

@@ -19,12 +19,9 @@ public class JumpState : CharacterState
         }
         jumping = true;
         Player.gravity = Player.jumpGravity;
-        Debug.Log(JumpCount);
         Player.verticalVelocity = JumpCount == 0 ? Player.initialJumpVelocity * 0.5f : Player.initialJumpVelocity * 0.5f * Player.doubleJumpMult;
         JumpCount++;
-
-        // (Optional) Trigger jump animation.
-        //Player.animator.SetTrigger(Player.JumpID);
+        Player.animator.SetTrigger("jump");
     }
 
     public override void HandleInput()
@@ -40,6 +37,9 @@ public class JumpState : CharacterState
         {
             StateMachine.ChangeState(new MovementState(Player, StateMachine));
         }
+    }
+    public override void DrawGizmo()
+    {
     }
 
     public override void Update()

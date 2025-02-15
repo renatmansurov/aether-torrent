@@ -42,9 +42,6 @@ public class PlayerController : MonoBehaviour
     public float dashDuration = 0.2f;
     public float dashCooldown = 1f;
     public float dashSpeed;
-    public float dashThreshold = 1f;
-    public float maxFallLimit = 2f;
-    public AnimationCurve dashCurve;
 
     // Dash internal state (remains as provided)
     public bool isDashing;
@@ -74,8 +71,6 @@ public class PlayerController : MonoBehaviour
     private float currentHeight;
     private float lastHeight;
     public float lastJumpHeight;
-    public Vector3 currentDashTarget;
-    public Vector3 currentDashStart;
 
     // Animator parameter hashes
     public static readonly int ChrSpeedID = Animator.StringToHash("chrSpeed");
@@ -115,13 +110,9 @@ public class PlayerController : MonoBehaviour
         playerStateMachine.HandleInput();
         playerStateMachine.Update();
 
-        // Always apply rotation even while dashing
         movementController.ApplyRotation();
-
-        // Set vertical velocity regardless of state
         movementController.VerticalVelocity = verticalVelocity;
 
-        // Only apply movement and update animator when not dashing
         //if (!isDashing)
         {
             movementController.ApplyMovement();
@@ -155,6 +146,7 @@ public class PlayerController : MonoBehaviour
         GUILayout.Label("State:" + playerStateMachine.CurrentState, style);
         GUILayout.Label("Vertical Velocity: " + verticalVelocity, styleSmall);
         GUILayout.Label("Gravity: " + gravity, styleSmall);
+        GUILayout.Label("Grounded: " + IsGrounded(), styleSmall);
     }
 
     private void FixedUpdate()
@@ -221,6 +213,7 @@ public class PlayerController : MonoBehaviour
             {
                 isFalling = true;
                 animator.SetBool(IsFallingID, true);
+                animator.SetBool(IsFallingID, true);
             }
         }
     }
@@ -231,10 +224,10 @@ public class PlayerController : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = new Color(1, 0, 0, 0.5f);
-        Gizmos.DrawLine(currentDashStart, currentDashTarget);
-        Gizmos.DrawCube(currentDashTarget, characterController.bounds.size);
-        Gizmos.DrawCube(currentDashStart, characterController.bounds.size);
+        if (Application.isPlaying)
+        {
+            playerStateMachine.DrawGizmo();
+        }
         var lastJumpHeightPos = new Vector3(characterController.transform.position.x, lastJumpHeight - characterController.height / 2, characterController.transform.position.z);
         Handles.DrawWireDisc(lastJumpHeightPos, Vector3.up, 1);
         var style = new GUIStyle

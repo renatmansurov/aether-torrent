@@ -1032,3 +1032,10 @@ ModelImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 215058
+  packageName: FREE - 32 RPG Animations
+  packageVersion: 1.1
+  assetPath: Assets/Asset Packs/Blink/Art/Animations/Animations_Starter_Pack/Movement/Sprint.fbx
+  uploadId: 489767

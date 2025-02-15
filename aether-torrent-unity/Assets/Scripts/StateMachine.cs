@@ -29,4 +29,9 @@ public class StateMachine
     {
         CurrentState.FixedUpdate();
     }
+
+    public void DrawGizmo()
+    {
+        CurrentState.DrawGizmo();
+    }
 }

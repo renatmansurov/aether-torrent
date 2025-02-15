@@ -43,4 +43,11 @@ public abstract class CharacterState
     public virtual void FixedUpdate()
     {
     }
+
+    /// <summary>
+    /// Draw Debug Gizmo
+    /// </summary>
+    public virtual void DrawGizmo()
+    {
+    }
 }

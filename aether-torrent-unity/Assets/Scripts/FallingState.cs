@@ -1,4 +1,3 @@
-using UnityEngine;
 
 public class FallingState : CharacterState
 {
@@ -9,8 +8,7 @@ public class FallingState : CharacterState
     public override void Enter()
     {
         Player.gravity *= Player.jumpFallGravityMult;
-        // Optionally, trigger falling animation.
-        // For example: Player.animator.SetBool("isFalling", true);
+        Player.animator.SetBool("isFalling", true);
     }
 
     public override void HandleInput()
@@ -20,6 +18,10 @@ public class FallingState : CharacterState
             Player.jumpBufferCounter = 0;
             StateMachine.ChangeState(new JumpState(Player, StateMachine));
         }
+    }
+
+    public override void DrawGizmo()
+    {
     }
 
     public override void Update()
