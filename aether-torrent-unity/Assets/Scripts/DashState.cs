@@ -34,7 +34,7 @@ public class DashState : CharacterState
             : Player.transform.forward;
 
         // Record dash start and target positions for debugging (optional)
-        Player.animator.SetTrigger("Dash");
+        Player.animator.SetTrigger("dash");
     }
 
     public override void HandleInput()

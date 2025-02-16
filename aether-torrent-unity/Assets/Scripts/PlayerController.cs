@@ -74,9 +74,9 @@ public class PlayerController : MonoBehaviour
 
     // Animator parameter hashes
     public static readonly int ChrSpeedID = Animator.StringToHash("chrSpeed");
-    public static readonly int JumpID = Animator.StringToHash("jump");
+    public static readonly int JumpID = Animator.StringToHash("jumpStart");
     public static readonly int IsFallingID = Animator.StringToHash("isFalling");
-    public static readonly int LandID = Animator.StringToHash("land");
+    public static readonly int JumpEnd = Animator.StringToHash("jumpEnd");
 
     private void Awake()
     {
@@ -200,7 +200,7 @@ public class PlayerController : MonoBehaviour
         {
             startFall = isFalling = false;
             animator.SetBool(IsFallingID, false);
-            animator.SetTrigger(LandID);
+            animator.SetTrigger(JumpEnd);
         }
         else if (!isFalling)
         {

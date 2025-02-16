@@ -21,7 +21,7 @@ public class JumpState : CharacterState
         Player.gravity = Player.jumpGravity;
         Player.verticalVelocity = JumpCount == 0 ? Player.initialJumpVelocity * 0.5f : Player.initialJumpVelocity * 0.5f * Player.doubleJumpMult;
         JumpCount++;
-        Player.animator.SetTrigger("jump");
+        Player.animator.SetTrigger("jumpStart");
     }
 
     public override void HandleInput()
