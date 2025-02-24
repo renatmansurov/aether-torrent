@@ -9,38 +9,51 @@
 
 static const float KernelWeights[] = {0.2026, 0.1790, 0.1240, 0.0672, 0.0285};
 
-// Blurs the RGB channels of the given texture using depth aware gaussian blur, which uses the downsampled camera depth to apply weights to the blur.
-// The alpha channel is not blurred so the original value is returned.
+// Blurs the RGB channels of the given texture using depth-aware Gaussian blur.
+// The alpha channel remains unblurred.
 float4 DepthAwareGaussianBlur(float2 uv, float2 dir, TEXTURE2D_X(textureToBlur), SAMPLER(sampler_TextureToBlur), float2 textureToBlurTexelSizeXy)
 {
+    // Sample center pixel and compute its depth.
     float4 centerSample = SAMPLE_TEXTURE2D_X(textureToBlur, sampler_TextureToBlur, uv);
     float centerDepth = SampleDownsampledSceneDepth(uv);
     float centerLinearEyeDepth = LinearEyeDepthConsiderProjection(centerDepth);
 
+    // Initialize accumulation with the center sample.
     float3 rgbResult = centerSample.rgb * KernelWeights[0];
-    float weights = KernelWeights[0];
-    float2 texelSizeTimesDir = textureToBlurTexelSizeXy * dir;
+    float totalWeight = KernelWeights[0];
 
-    for (int i = -KERNEL_RADIUS; i <= KERNEL_RADIUS; ++i)
+    // Precompute the texel direction.
+    float2 texelDir = textureToBlurTexelSizeXy * dir;
+
+    UNITY_UNROLL
+    for (int i = 1; i <= KERNEL_RADIUS; ++i)
     {
-        if (i == 0) continue;
+        float2 offset = (float)i * texelDir;
 
-        float2 uvOffset = (float)i * texelSizeTimesDir;
-        float2 uvSample = uv + uvOffset;
+        // Positive offset sample.
+        float2 uvPos = uv + offset;
+        float depthPos = SampleDownsampledSceneDepth(uvPos);
+        float linearDepthPos = LinearEyeDepthConsiderProjection(depthPos);
+        float depthDiffPos = abs(centerLinearEyeDepth - linearDepthPos);
+        float r2Pos = BLUR_DEPTH_FALLOFF * depthDiffPos;
+        float weightPos = exp(-r2Pos * r2Pos) * KernelWeights[i];
+        float3 rgbPos = SAMPLE_TEXTURE2D_X(textureToBlur, sampler_TextureToBlur, uvPos).rgb;
 
-        float depth = SampleDownsampledSceneDepth(uvSample);
-        float linearEyeDepth = LinearEyeDepthConsiderProjection(depth);
-        float depthDiff = abs(centerLinearEyeDepth - linearEyeDepth);
-        float r2 = BLUR_DEPTH_FALLOFF * depthDiff;
-        float g = exp(-r2 * r2);
-        float weight = g * KernelWeights[abs(i)];
+        // Negative offset sample.
+        float2 uvNeg = uv - offset;
+        float depthNeg = SampleDownsampledSceneDepth(uvNeg);
+        float linearDepthNeg = LinearEyeDepthConsiderProjection(depthNeg);
+        float depthDiffNeg = abs(centerLinearEyeDepth - linearDepthNeg);
+        float r2Neg = BLUR_DEPTH_FALLOFF * depthDiffNeg;
+        float weightNeg = exp(-r2Neg * r2Neg) * KernelWeights[i];
+        float3 rgbNeg = SAMPLE_TEXTURE2D_X(textureToBlur, sampler_TextureToBlur, uvNeg).rgb;
 
-        float3 rgb = SAMPLE_TEXTURE2D_X(textureToBlur, sampler_TextureToBlur, uvSample).rgb;
-        rgbResult += (rgb * weight);
-        weights += weight;
+        // Accumulate both samples.
+        rgbResult += (rgbPos * weightPos) + (rgbNeg * weightNeg);
+        totalWeight += weightPos + weightNeg;
     }
 
-    return float4(rgbResult * rcp(weights), centerSample.a);
+    return float4(rgbResult * rcp(totalWeight), centerSample.a);
 }
 
 #endif

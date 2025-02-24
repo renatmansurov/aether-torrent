@@ -28,6 +28,22 @@ MonoBehaviour:
   groundHeight:
     m_OverrideState: 1
     m_Value: 0
+  volumeNoiseTexture:
+    m_OverrideState: 0
+    m_Value: {fileID: 0}
+    dimension: 1
+  noiseScale:
+    m_OverrideState: 0
+    m_Value: {x: 1, y: 1, z: 1, w: 1}
+  noiseSpeed:
+    m_OverrideState: 0
+    m_Value: {x: 0, y: 0, z: 0, w: 0}
+  noiseHeightInfluence:
+    m_OverrideState: 0
+    m_Value: 0.5
+  noiseBlendFactor:
+    m_OverrideState: 0
+    m_Value: 0.5
   density:
     m_OverrideState: 1
     m_Value: 1
@@ -89,26 +105,42 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   active: 1
   distance:
-    m_OverrideState: 0
-    m_Value: 64
+    m_OverrideState: 1
+    m_Value: 40
   baseHeight:
     m_OverrideState: 1
     m_Value: 0
   maximumHeight:
     m_OverrideState: 1
-    m_Value: 4
+    m_Value: 3
   enableGround:
-    m_OverrideState: 1
+    m_OverrideState: 0
     m_Value: 0
   groundHeight:
     m_OverrideState: 0
     m_Value: 0
+  volumeNoiseTexture:
+    m_OverrideState: 1
+    m_Value: {fileID: 2800000, guid: 255169015f99f6e4e9dd8d561041bdc2, type: 3}
+    dimension: 1
+  noiseScale:
+    m_OverrideState: 1
+    m_Value: {x: 0.05, y: 0.065, z: 0.0405, w: 0.0455}
+  noiseSpeed:
+    m_OverrideState: 1
+    m_Value: {x: 0.02, y: 0.03, z: 0.01, w: 0.05}
+  noiseHeightInfluence:
+    m_OverrideState: 1
+    m_Value: 1.43
+  noiseBlendFactor:
+    m_OverrideState: 1
+    m_Value: 1.25
   density:
     m_OverrideState: 1
     m_Value: 1
   attenuationDistance:
     m_OverrideState: 0
-    m_Value: 128
+    m_Value: 12.03
   enableMainLightContribution:
     m_OverrideState: 1
     m_Value: 1
@@ -126,7 +158,7 @@ MonoBehaviour:
     m_Value: 1
   maxSteps:
     m_OverrideState: 1
-    m_Value: 32
+    m_Value: 40
   blurIterations:
     m_OverrideState: 1
     m_Value: 2

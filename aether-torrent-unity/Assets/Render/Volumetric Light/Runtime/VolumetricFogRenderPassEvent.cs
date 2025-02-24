@@ -1,9 +1,12 @@
-/// <summary>
-/// Render pass events for the volumetric fog. Matches the ones in the Universal Render Pipeline.
-/// </summary>
-public enum VolumetricFogRenderPassEvent
+namespace Render.Volumetric_Light.Runtime
 {
-	BeforeRenderingTransparents = 450,
-	AfterRenderingTransparents = 500,
-	BeforeRenderingPostProcessing = 550
+	/// <summary>
+	/// Render pass events for the volumetric fog. Matches the ones in the Universal Render Pipeline.
+	/// </summary>
+	public enum VolumetricFogRenderPassEvent
+	{
+		BeforeRenderingTransparents = 450,
+		AfterRenderingTransparents = 500,
+		BeforeRenderingPostProcessing = 550
+	}
 }

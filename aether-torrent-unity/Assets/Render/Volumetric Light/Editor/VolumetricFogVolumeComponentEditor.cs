@@ -1,3 +1,4 @@
+using Render.Volumetric_Light.Runtime;
 using UnityEditor;
 using UnityEditor.Rendering;
 
@@ -15,6 +16,14 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 
     private SerializedDataParameter enableGround;
     private SerializedDataParameter groundHeight;
+
+    private SerializedDataParameter volumeNoiseTexture;
+    private SerializedDataParameter noiseScale;
+    private SerializedDataParameter noiseSpeed;
+    private SerializedDataParameter noiseHeightInfluence;
+    private SerializedDataParameter noiseBlendFactor;
+
+
 
     private SerializedDataParameter density;
     private SerializedDataParameter attenuationDistance;
@@ -49,6 +58,12 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 
         enableGround = Unpack(pf.Find(x => x.enableGround));
         groundHeight = Unpack(pf.Find(x => x.groundHeight));
+
+        volumeNoiseTexture = Unpack(pf.Find(x => x.volumeNoiseTexture));
+        noiseScale = Unpack(pf.Find(x => x.noiseScale));
+        noiseSpeed = Unpack(pf.Find(x => x.noiseSpeed));
+        noiseHeightInfluence = Unpack(pf.Find(x => x.noiseHeightInfluence));
+        noiseBlendFactor = Unpack(pf.Find(x => x.noiseBlendFactor));
 
         density = Unpack(pf.Find(x => x.density));
         attenuationDistance = Unpack(pf.Find(x => x.attenuationDistance));
@@ -90,7 +105,15 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 
         PropertyField(enableGround);
         if (enabledGround)
+        {
             PropertyField(groundHeight);
+        }
+
+        PropertyField(volumeNoiseTexture);
+        PropertyField(noiseScale);
+        PropertyField(noiseSpeed);
+        PropertyField(noiseHeightInfluence);
+        PropertyField(noiseBlendFactor);
 
         PropertyField(density);
         PropertyField(attenuationDistance);

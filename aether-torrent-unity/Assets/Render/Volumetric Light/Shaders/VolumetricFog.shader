@@ -32,10 +32,25 @@ Shader "Hidden/VolumetricFog"
             #pragma vertex Vert
             #pragma fragment Frag
 
+            TEXTURE2D(_VolumeNoiseTexture);
+            SAMPLER(sampler_VolumeNoiseTexture);
+            float4 _NoiseScale;
+            float4 _NoiseSpeed;
+            float _NoiseHeightInfluence;
+            float _NoiseBlendFactor;
+
             float4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                return VolumetricFog(input.texcoord, input.positionCS.xy);
+                float3 posWS;
+                half4 volumetricFog = VolumetricFog(input.texcoord, input.positionCS.xy, posWS);
+                float2 noiseUV = posWS.xz + float2(0.0, posWS.y * _NoiseHeightInfluence);
+                float noise1 = SAMPLE_TEXTURE3D(_VolumeNoiseTexture, sampler_VolumeNoiseTexture, noiseUV * _NoiseScale.xy + _Time.yy * _NoiseSpeed.xy).r;
+                float noise2 = SAMPLE_TEXTURE3D(_VolumeNoiseTexture, sampler_VolumeNoiseTexture, noiseUV * _NoiseScale.zw + _Time.yy * _NoiseSpeed.zw).r;
+                float combinedNoise = (noise1 + noise2 * 0.5) * 0.66;
+                combinedNoise = pow(combinedNoise, _NoiseBlendFactor) * _NoiseBlendFactor;
+                volumetricFog.rgb *= lerp(1.0, combinedNoise, 1);
+                return volumetricFog;
             }
             ENDHLSL
         }
@@ -115,10 +130,8 @@ Shader "Hidden/VolumetricFog"
             float4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-
                 float4 volumetricFog = DepthAwareUpsample(input.texcoord, _VolumetricFogTexture);
                 float4 cameraColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_BlitTexture, input.texcoord);
-
                 return float4(cameraColor.rgb * volumetricFog.a + volumetricFog.rgb, cameraColor.a);
             }
             ENDHLSL
@@ -164,7 +177,6 @@ Shader "Hidden/VolumetricFog"
 
                 float4 volumetricFog = DepthAwareUpsample(input.texcoord, _VolumetricFogTexture);
                 float4 cameraColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_BlitTexture, input.texcoord);
-
                 return float4(cameraColor.rgb * volumetricFog.a + volumetricFog.rgb, cameraColor.a);
             }
             ENDHLSL
